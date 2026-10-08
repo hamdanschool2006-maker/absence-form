@@ -3,18 +3,18 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="description" content="نموذج رصد غياب الطلاب بالحصة واليوم الكامل — مدرسة الشيخ حمدان بن خميس اليوسفي (7-10) صباحي">
+<meta name="description" content="بوابة المعلم: رصد غياب الطلاب وبيانات دخول الأنظمة — مدرسة الشيخ حمدان بن خميس اليوسفي (7-10) صباحي">
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="مدرسة الشيخ حمدان بن خميس اليوسفي">
-<meta property="og:title" content="رصد غياب الطلاب | مدرسة الشيخ حمدان بن خميس اليوسفي">
-<meta property="og:description" content="نموذج المعلم لرصد الغياب بالحصة أو يومًا كاملًا، وعرض سجل الغياب.">
+<meta property="og:title" content="بوابة المعلم | مدرسة الشيخ حمدان بن خميس اليوسفي">
+<meta property="og:description" content="رصد غياب الطلاب بالحصة أو يومًا كاملًا، وبيانات دخولك للبوابة التعليمية ونور والبريد ومورد وإجادة ومنظرة.">
 <meta property="og:url" content="https://hamdanschool2006-maker.github.io/absence-form/">
 <meta property="og:image" content="https://hamdanschool2006-maker.github.io/absence-form/preview.jpg">
 <meta property="og:image:secure_url" content="https://hamdanschool2006-maker.github.io/absence-form/preview.jpg">
 <meta property="og:image:type" content="image/jpeg">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
-<meta property="og:image:alt" content="رصد غياب الطلاب — مدرسة الشيخ حمدان بن خميس اليوسفي">
+<meta property="og:image:alt" content="بوابة المعلم — مدرسة الشيخ حمدان بن خميس اليوسفي">
 <meta property="og:locale" content="ar_OM">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:image" content="https://hamdanschool2006-maker.github.io/absence-form/preview.jpg">
@@ -23,10 +23,10 @@
 <link rel="manifest" href="manifest.webmanifest">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-title" content="رصد الغياب">
+<meta name="apple-mobile-web-app-title" content="بوابة المعلم">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="theme-color" content="#eee4cf">
-<title>رصد الغياب | مدرسة الشيخ حمدان بن خميس اليوسفي</title>
+<title>بوابة المعلم | مدرسة الشيخ حمدان بن خميس اليوسفي</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="preconnect" href="https://script.google.com">
@@ -158,6 +158,34 @@ input[type=date].ctl::-webkit-date-and-time-value{text-align:right}
 .tr .sum2{display:block;font-weight:400;font-size:12px;color:var(--muted);margin-top:2px}
 .tr em{font-style:normal;font-size:13px;color:var(--muted);white-space:nowrap;text-align:left}
 .tr.s1{border-right:5px solid #178a6e}.tr.s2{border-right:5px solid #d99a2b}.tr.s3{border-right:5px solid var(--maroon)}
+.sys{background:var(--card);border-radius:22px;margin-bottom:12px;box-shadow:0 6px 18px rgba(90,70,40,.06);overflow:hidden}
+.sys summary{list-style:none;cursor:pointer;display:flex;align-items:center;gap:12px;padding:16px 18px}
+.sys summary::-webkit-details-marker{display:none}
+.sys summary .n{width:34px;height:34px;border-radius:11px;flex:none;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;background:linear-gradient(135deg,var(--g1),var(--g2))}
+.sys summary b{font-family:"Amiri",serif;font-size:21px;flex:1}
+.sys summary::after{content:"‹";font-size:24px;color:var(--muted);transition:transform .2s}
+.sys[open] summary::after{transform:rotate(-90deg)}
+.sys .body{padding:0 18px 18px}
+.kv{background:var(--field);border:2px solid var(--border);border-radius:14px;padding:9px 12px;margin-top:10px;display:flex;align-items:center;gap:8px}
+.kv label{display:block;font-size:13px;color:var(--muted)}
+.kv .v{flex:1;min-width:0}
+.kv .v span{display:block;font-weight:700;direction:ltr;text-align:right;word-break:break-all;font-size:16px}
+.kv .v span.ar{direction:rtl;font-weight:500;font-size:15px}
+.ib{border:0;background:#fff;border-radius:10px;padding:7px 10px;font-size:13px;font-weight:500;flex:none;border:1px solid var(--border)}
+.hint{font-size:14px;color:var(--muted);margin:12px 2px 0;line-height:1.7}
+.hint b{color:var(--ink)}
+.acts{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
+.act{flex:1 1 auto;text-align:center;text-decoration:none;border-radius:14px;padding:11px 12px;font-size:15px;font-weight:500;border:2px solid var(--border);background:var(--card);color:var(--ink)}
+.act.go{border:0;color:#fff;background:linear-gradient(90deg,var(--g1),var(--g2))}
+.act.req{border-color:var(--maroon);color:var(--maroon)}
+.act:disabled{opacity:.6;cursor:default}
+.sms{direction:ltr;display:inline-block;background:#fff;border:1px dashed var(--border);border-radius:8px;padding:0 8px;font-weight:700;color:var(--ink)}
+.me{background:var(--card);border-radius:22px;padding:18px;margin-bottom:16px;box-shadow:0 6px 18px rgba(90,70,40,.06);border-top:5px solid var(--g1)}
+.me h3{margin:0;font-family:"Amiri",serif;font-size:23px;line-height:1.4}
+.me .job{color:var(--muted);font-size:15px;margin-bottom:6px}
+.me .grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.me .grid .kv{margin-top:0}
+.me .grid .wide{grid-column:1/-1}
 .empty{text-align:center;color:var(--muted);padding:20px}
 
 .toast{position:fixed;top:calc(14px + env(safe-area-inset-top));left:16px;right:16px;max-width:500px;margin:auto;z-index:9;
@@ -175,7 +203,8 @@ input[type=date].ctl::-webkit-date-and-time-value{text-align:right}
 
   <!-- الدخول -->
   <section id="loginView">
-    <h2 class="title">رصد الغياب — دخول المعلم</h2>
+    <h2 class="title">بوابة المعلم</h2>
+    <div class="who">سجّل دخولك بالرقم المدني وكلمة المرور.</div>
     <div class="card">
       <div class="field"><label for="civil">الرقم المدني</label><input class="ctl" id="civil" inputmode="numeric" autocomplete="username"></div>
       <div class="field"><label for="pass">كلمة المرور</label><input class="ctl" id="pass" type="password" autocomplete="current-password"></div>
@@ -187,8 +216,36 @@ input[type=date].ctl::-webkit-date-and-time-value{text-align:right}
 
   <!-- الرئيسية -->
   <section id="homeView" class="hidden">
-    <h2 class="title">مرحبًا بك</h2>
-    <div class="who" id="who"></div>
+    <h2 class="title">بوابة المعلم</h2>
+    <div id="meWrap"></div>
+    <div class="tiles">
+      <button class="tile" id="goSys">
+        <span class="ic"><svg viewBox="0 0 24 24" width="30" height="30" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><circle cx="17.5" cy="17.5" r="3.2"/><path d="M19.8 19.8L22 22"/></svg></span>
+        <b>الأنظمة</b><small>البوابة التعليمية، نور، البريد، مورد، إجادة، منظرة</small>
+      </button>
+      <button class="tile" id="goAbs">
+        <span class="ic"><svg viewBox="0 0 24 24" width="30" height="30" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="3" width="14" height="18" rx="2"/><path d="M9 3h6v3H9z"/><path d="M9 12l2 2 4-4"/></svg></span>
+        <b>رصد الغياب</b><small>رصد غياب الطلاب وسجل الغياب</small>
+      </button>
+    </div>
+    <details class="install" id="installCard">
+      <summary>أضف بوابة المعلم إلى الشاشة الرئيسية للهاتف</summary>
+      <div class="os" id="osIos"><b>آيفون (Safari)</b>
+        <ol><li>افتح الرابط في متصفح <b>Safari</b> (وليس من داخل الواتساب مباشرة).</li>
+        <li>اضغط زر المشاركة <span class="k">⬆︎</span> أسفل الشاشة.</li>
+        <li>اختر <b>إضافة إلى الشاشة الرئيسية</b>، ثم <b>إضافة</b>.</li></ol></div>
+      <div class="os" id="osAnd"><b>أندرويد (Chrome)</b>
+        <ol><li>افتح الرابط في متصفح <b>Chrome</b>.</li>
+        <li>اضغط النقاط الثلاث <span class="k">⋮</span> أعلى الشاشة.</li>
+        <li>اختر <b>إضافة إلى الشاشة الرئيسية</b> أو <b>تثبيت التطبيق</b>، ثم <b>إضافة</b>.</li></ol></div>
+      <p class="tip">ستظهر أيقونة شعار المدرسة في هاتفك، ومع «تذكرني» تفتح بوابة المعلم مباشرة دون إدخال البيانات.</p>
+    </details>
+    <button class="back" id="logoutBtn">› تسجيل الخروج</button>
+  </section>
+
+  <!-- قسم رصد الغياب -->
+  <section id="absView" class="hidden">
+    <h2 class="title">رصد الغياب</h2>
     <div class="tiles">
       <button class="tile" id="goRecord">
         <span class="ic"><svg viewBox="0 0 24 24" width="30" height="30" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="3" width="14" height="18" rx="2"/><path d="M9 3h6v3H9z"/><path d="M9 12l2 2 4-4"/></svg></span>
@@ -203,19 +260,7 @@ input[type=date].ctl::-webkit-date-and-time-value{text-align:right}
         <b>سجل الدخول</b><small>من دخل من المعلمين ورصد الغياب في يوم تختاره</small>
       </button>
     </div>
-    <details class="install" id="installCard">
-      <summary>أضف النموذج إلى الشاشة الرئيسية للهاتف</summary>
-      <div class="os" id="osIos"><b>آيفون (Safari)</b>
-        <ol><li>افتح الرابط في متصفح <b>Safari</b> (وليس من داخل الواتساب مباشرة).</li>
-        <li>اضغط زر المشاركة <span class="k">⬆︎</span> أسفل الشاشة.</li>
-        <li>اختر <b>إضافة إلى الشاشة الرئيسية</b>، ثم <b>إضافة</b>.</li></ol></div>
-      <div class="os" id="osAnd"><b>أندرويد (Chrome)</b>
-        <ol><li>افتح الرابط في متصفح <b>Chrome</b>.</li>
-        <li>اضغط النقاط الثلاث <span class="k">⋮</span> أعلى الشاشة.</li>
-        <li>اختر <b>إضافة إلى الشاشة الرئيسية</b> أو <b>تثبيت التطبيق</b>، ثم <b>إضافة</b>.</li></ol></div>
-      <p class="tip">ستظهر أيقونة شعار المدرسة في هاتفك، ومع «تذكرني» يفتح النموذج مباشرة دون إدخال البيانات.</p>
-    </details>
-    <button class="back" id="logoutBtn">› تسجيل الخروج</button>
+    <button class="back" data-home>› رجوع للخلف</button>
   </section>
 
   <!-- رصد الغياب -->
@@ -231,6 +276,14 @@ input[type=date].ctl::-webkit-date-and-time-value{text-align:right}
     <button class="back" id="recBack">› رجوع للخلف</button>
   </section>
 
+  <!-- الأنظمة -->
+  <section id="sysView" class="hidden">
+    <h2 class="title">الأنظمة</h2>
+    <div class="who">بياناتك الخاصة فقط. لا تشاركها مع أحد.</div>
+    <div id="sysWrap"><div class="empty">جارٍ التحميل…</div></div>
+    <button class="back" data-home>› رجوع للخلف</button>
+  </section>
+
   <!-- سجل الدخول -->
   <section id="statsView" class="hidden">
     <h2 class="title">سجل دخول المعلمين</h2>
@@ -239,7 +292,7 @@ input[type=date].ctl::-webkit-date-and-time-value{text-align:right}
       <button class="btn" id="stBtn">عرض</button>
     </div>
     <div id="stWrap"></div>
-    <button class="back" data-home>› رجوع للخلف</button>
+    <button class="back" data-abs>› رجوع للخلف</button>
   </section>
 
   <!-- سجل الغياب -->
@@ -263,7 +316,7 @@ input[type=date].ctl::-webkit-date-and-time-value{text-align:right}
       <button class="btn" id="logBtn">عرض</button>
     </div>
     <div id="logWrap"></div>
-    <button class="back" data-home>› رجوع للخلف</button>
+    <button class="back" data-abs>› رجوع للخلف</button>
   </section>
   <footer class="credit">تصميم أ. عبدالله الشكيلي<span>أخصائي أنظمة مدرسية</span></footer>
 </div>
@@ -310,10 +363,10 @@ async function rawCall(fn,...args){
 function applyMe(me){
   S.canLog=me.canLog!==false; store('absLog',S.canLog?'1':'0');
   const t=document.getElementById('goLog'); if(t) t.classList.toggle('hidden',!S.canLog);
-  if(!S.canLog && !document.getElementById('logView').classList.contains('hidden')){ show('homeView'); toast('لم تعد لديك صلاحية عرض سجل الغياب.',true); }
+  if(!S.canLog && !document.getElementById('logView').classList.contains('hidden')){ backToAbs(); toast('لم تعد لديك صلاحية عرض سجل الغياب.',true); }
   S.canStats=me.canStats===true; store('absStats',S.canStats?'1':'0');
   const g=document.getElementById('goStats'); if(g) g.classList.toggle('hidden',!S.canStats);
-  if(!S.canStats && !document.getElementById('statsView').classList.contains('hidden')){ show('homeView'); toast('لم تعد لديك صلاحية عرض سجل الدخول.',true); }
+  if(!S.canStats && !document.getElementById('statsView').classList.contains('hidden')){ backToAbs(); toast('لم تعد لديك صلاحية عرض سجل الدخول.',true); }
 }
 const msg=e=>(e&&e.message?e.message:String(e)).replace(/^Error:\s*/,'');
 function toast(t,bad){ const d=document.createElement('div'); d.className='toast'+(bad?' bad':''); d.textContent=t; document.body.appendChild(d); setTimeout(()=>d.remove(),bad?5000:3000); }
@@ -333,9 +386,9 @@ async function doLogin(){
 }
 $('loginBtn').onclick=doLogin;
 $('pass').addEventListener('keydown',e=>{ if(e.key==='Enter') doLogin(); });
-const VIEWS=['loginView','homeView','recordView','logView','statsView'];
+const VIEWS=['loginView','homeView','absView','recordView','logView','statsView','sysView'];
 function show(v){ VIEWS.forEach(x=>$(x).classList.toggle('hidden',x!==v)); window.scrollTo(0,0); }
-function logoutLocal(){ store('absToken',null); S.token=null; show('loginView'); $('pass').value=''; $('listWrap').innerHTML=''; $('logWrap').innerHTML=''; }
+function logoutLocal(){ store('absToken',null); S.token=null; SYS=null; show('loginView'); $('pass').value=''; $('listWrap').innerHTML=''; $('logWrap').innerHTML=''; }
 // «رجوع للخلف» في رصد الغياب: من قائمة الطلاب يعود لاختيار الصف والشعبة، ومن الاختيار يعود للرئيسية
 $('recBack').onclick=()=>{
   if($('listWrap').innerHTML.trim()){
@@ -344,8 +397,13 @@ $('recBack').onclick=()=>{
     $('pick').scrollIntoView({behavior:'smooth',block:'start'});
     return;
   }
-  show('homeView');
+  backToAbs();
 };
+// قسم رصد الغياب: إن لم يكن للمعلم إلا «رصد الغياب» يُفتح مباشرة دون قائمة وسيطة
+function absHasHub(){ return S.canLog||S.canStats; }
+function backToAbs(){ show(absHasHub()?'absView':'homeView'); }
+$('goAbs').onclick=()=>{ if(absHasHub()) show('absView'); else show('recordView'); };
+document.querySelectorAll('[data-abs]').forEach(b=>b.onclick=()=>backToAbs());
 document.querySelectorAll('[data-home]').forEach(b=>b.onclick=()=>{
   if(!$('recordView').classList.contains('hidden') && dirtyList().length && !confirm('لديك تغييرات لم تُحفظ. هل تريد الخروج دون حفظ؟')) return;
   show('homeView');
@@ -354,7 +412,7 @@ $('logoutBtn').onclick=()=>{ rawCall('logout',S.token,lget('absRemember')).catch
 
 function startApp(){
   show('homeView');
-  $('who').textContent='المعلم: '+S.name;
+  renderMe(); loadMe();
   $('goLog').classList.toggle('hidden',!S.canLog);
   $('goStats').classList.toggle('hidden',!S.canStats);
   const sd=$('stDate'); sd.max=S.today; if(!sd.value) sd.value=S.today; stShowDay();
@@ -370,6 +428,109 @@ $('goLog').onclick=async()=>{
   try{ await call('getClasses',S.token); }catch(e){ handleErr(e); return; }
   if(S.canLog) show('logView');
 };
+
+/* ---- بيانات المعلم في الصفحة الرئيسية ---- */
+function renderMe(){
+  const s=SYS||{};
+  $('meWrap').innerHTML='<div class="me"><h3>'+esc(s.name||S.name||'')+'</h3>'+(s.job?'<div class="job">'+esc(s.job)+'</div>':'')+
+    (SYS?'<div class="grid">'+kv('الرقم المدني',s.civil)+kv('رقم الملف',s.fileNo,{empty:'غير متوفر'})+
+      '<div class="wide">'+kv('البريد الإلكتروني',s.email,{empty:'غير متوفر لدينا'})+'</div></div>'
+      :'<div class="job">جارٍ تحميل بياناتك…</div>')+'</div>';
+  bindKv($('meWrap'));
+}
+async function loadMe(){
+  if(SYS) return;
+  try{ SYS=await call('getMySystems',S.token); renderMe(); }catch(e){ $('meWrap').querySelector('.job')&&($('meWrap').querySelector('.job').textContent=''); }
+}
+function bindKv(w){
+  w.querySelectorAll('[data-copy]').forEach(b=>b.onclick=()=>copyText($(b.dataset.copy).dataset.v));
+  w.querySelectorAll('[data-eye]').forEach(b=>b.onclick=()=>{ const e=$(b.dataset.eye), shown=b.textContent==='إخفاء';
+    e.textContent=shown?'••••••••':e.dataset.v; b.textContent=shown?'إظهار':'إخفاء'; });
+}
+
+/* ---- الأنظمة ---- */
+const SYS_LINKS={
+  portal:'https://home.moe.gov.om/',
+  noor:'https://lms.moe.gov.om/#networkfirst',
+  mail:'https://outlook.office.com/mail/',
+  mawred:'https://pext-hrss.mol.gov.om/OA_HTML/AppsLocalLogin.jsp',
+  ejada:'https://ejada.gov.om/Auth/login',
+  monzara:'https://eportal.moe.gov.om/egov/Login?returnurl=%2fegov'
+};
+let SYS=null;
+$('goSys').onclick=async()=>{
+  show('sysView');
+  if(SYS){ renderSys(); return; }
+  $('sysWrap').innerHTML='<div class="empty">جارٍ التحميل…</div>';
+  try{ SYS=await call('getMySystems',S.token); renderSys(); }
+  catch(e){ $('sysWrap').innerHTML='<div class="empty">تعذر تحميل البيانات. حاول مرة أخرى.</div>'; handleErr(e); }
+};
+function copyText(t){
+  const done=()=>toast('تم النسخ.');
+  if(navigator.clipboard&&window.isSecureContext){ navigator.clipboard.writeText(t).then(done,()=>fallback()); } else fallback();
+  function fallback(){ const a=document.createElement('textarea'); a.value=t; a.style.position='fixed'; a.style.opacity='0'; document.body.appendChild(a); a.select(); try{document.execCommand('copy'); done();}catch(e){} a.remove(); }
+}
+function kv(label,val,opt){
+  opt=opt||{};
+  if(!val) return '<div class="kv"><div class="v"><label>'+label+'</label><span class="ar">'+(opt.empty||'غير متوفر')+'</span></div></div>';
+  const id='k'+Math.random().toString(36).slice(2,8);
+  return '<div class="kv"><div class="v"><label>'+label+'</label><span id="'+id+'" data-v="'+esc(val)+'"'+(opt.secret?' data-s="1"':'')+'>'+(opt.secret?'••••••••':esc(val))+'</span></div>'+
+    (opt.secret?'<button class="ib" data-eye="'+id+'">إظهار</button>':'')+'<button class="ib" data-copy="'+id+'">نسخ</button></div>';
+}
+function reqBtn(sys){
+  const p=SYS.pending&&SYS.pending[{portal:'البوابة التعليمية',noor:'منصة نور',monzara:'منصة منظرة'}[sys]];
+  return p?'<button class="act req" disabled>✓ تم إرسال طلب التفعيل</button>':'<button class="act req" data-req="'+sys+'">طلب تفعيل</button>';
+}
+const goBtn=(k,t)=>'<a class="act go" href="'+SYS_LINKS[k]+'" target="_blank" rel="noopener">'+(t||'الدخول إلى الموقع')+'</a>';
+function renderSys(){
+  const s=SYS, civ=s.civil;
+  const ios=/iPhone|iPad|iPod/i.test(navigator.userAgent||'');
+  const smsHref='sms:90390'+(ios?'&':'?')+'body='+encodeURIComponent('U '+civ);
+  const pwChanged=s.noorPw==='تم تغييرها من قبل المستخدم';
+  const meCard='<div class="me"><h3>'+esc(s.name||S.name)+'</h3>'+(s.job?'<div class="job">'+esc(s.job)+'</div>':'')+
+    '<div class="grid">'+kv('الرقم المدني',civ)+kv('رقم الملف',s.fileNo,{empty:'غير متوفر'})+
+    '<div class="wide">'+kv('البريد الإلكتروني',s.email,{empty:'غير متوفر لدينا'})+'</div></div></div>';
+  const cards=[
+    ['البوابة التعليمية',
+      kv('اسم المستخدم',s.portalUser,{empty:'غير متوفر لدينا — اطلب التفعيل'})+
+      '<div class="hint"><b>كلمة المرور:</b> احصل عليها بإحدى طريقتين:<br>١- أرسل رسالة نصية <span class="sms">U '+esc(civ)+'</span> إلى الرقم <span class="sms">90390</span><br>٢- أو اضغط «طلب تفعيل» وسيتواصل معك أخصائي الأنظمة.</div>'+
+      '<div class="acts"><a class="act" href="'+smsHref+'">إرسال الرسالة النصية</a>'+reqBtn('portal')+'</div><div class="acts">'+goBtn('portal')+'</div>'],
+    s.hasNoor?['منصة نور',
+      kv('اسم المستخدم',s.noorUser||civ)+
+      (pwChanged?kv('كلمة المرور','',{empty:'غيّرتها أنت سابقًا — استخدم كلمتك الحالية'}):kv('كلمة المرور',s.noorPw,{secret:true,empty:'غير متوفرة لدينا'}))+
+      '<div class="hint">إذا فقدت كلمة المرور: اضغط «طلب تفعيل»، أو استخدم ميزة <b>«نسيت بيانات الدخول»</b> في موقع المنصة.</div>'+
+      '<div class="acts">'+reqBtn('noor')+goBtn('noor')+'</div>']:null,
+    ['البريد الإلكتروني',
+      kv('البريد الإلكتروني',s.email,{empty:'غير متوفر لدينا'})+
+      '<div class="hint"><b>كلمة المرور:</b> إذا نسيتها استخدم ميزة <b>«نسيت كلمة المرور»</b> في صفحة دخول البريد (Outlook).</div>'+
+      '<div class="acts">'+goBtn('mail')+'</div>'],
+    ['نظام مورد',
+      kv('اسم المستخدم (الرقم المدني)',civ)+
+      '<div class="hint"><b>كلمة المرور:</b> إذا نسيتها استخدم ميزة <b>«المساعدة في تسجيل الدخول»</b> في موقع نظام مورد.</div>'+
+      '<div class="acts">'+goBtn('mawred')+'</div>'],
+    ['منصة إجادة',
+      kv('اسم المستخدم (الرقم المدني)',civ)+
+      '<div class="hint"><b>كلمة المرور:</b> إذا نسيتها استخدم ميزة <b>«نسيت كلمة المرور»</b> في منصة إجادة.</div>'+
+      '<div class="acts">'+goBtn('ejada')+'</div>'],
+    ['منصة منظرة',
+      kv('اسم المستخدم (الرقم المدني)',civ)+
+      '<div class="hint"><b>كلمة المرور:</b> اضغط «طلب تفعيل»، أو استخدم ميزة <b>«نسيت كلمة المرور»</b> في موقع منصة منظرة.</div>'+
+      '<div class="acts">'+reqBtn('monzara')+goBtn('monzara')+'</div>']
+  ].filter(Boolean);
+  $('sysWrap').innerHTML=cards.map((c,i)=>'<details class="sys"><summary><span class="n">'+ar(i+1)+'</span><b>'+c[0]+'</b></summary><div class="body">'+c[1]+'</div></details>').join('');
+  const w=$('sysWrap');
+  bindKv(w);
+  w.querySelectorAll('[data-req]').forEach(b=>b.onclick=async()=>{
+    const sys=b.dataset.req;
+    if(!confirm('إرسال طلب تفعيل '+{portal:'البوابة التعليمية',noor:'منصة نور',monzara:'منصة منظرة'}[sys]+' إلى أخصائي الأنظمة؟')) return;
+    b.disabled=true; b.textContent='جارٍ الإرسال…';
+    try{ const r=await call('requestActivation',S.token,sys);
+      toast(r.already?'لديك طلب سابق قيد المتابعة.':'تم إرسال طلب التفعيل.');
+      SYS.pending=SYS.pending||{}; SYS.pending[{portal:'البوابة التعليمية',noor:'منصة نور',monzara:'منصة منظرة'}[sys]]=S.today;
+      b.textContent='✓ تم إرسال طلب التفعيل';
+    }catch(e){ b.disabled=false; b.textContent='طلب تفعيل'; handleErr(e); }
+  });
+}
 
 /* ---- سجل الدخول (إحصائية المعلمين اليومية) ---- */
 function stShowDay(){ const v=$('stDate').value; if(!v){$('stDay').textContent='';return;} const [y,m,d]=v.split('-').map(Number); $('stDay').textContent='يوم '+DAYS[new Date(Date.UTC(y,m-1,d)).getUTCDay()]; }
