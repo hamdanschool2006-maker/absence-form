@@ -233,6 +233,16 @@ input[type=date].ctl::-webkit-date-and-time-value{text-align:right}
 .x1[aria-checked="true"]{background:#1d7a46;border-color:#1d7a46}
 .x2[aria-checked="true"]{background:#2b579a;border-color:#2b579a}
 .x3[aria-checked="true"]{background:var(--maroon);border-color:var(--maroon)}
+.phc{margin-top:18px;background:var(--card);border-radius:28px;padding:24px 22px;text-align:center;box-shadow:0 8px 24px rgba(90,70,40,.08)}
+.phc .nm{font-family:"Amiri",serif;font-size:21px;font-weight:700;line-height:1.5}
+.phc .cl{color:var(--muted);font-size:15px;margin-top:2px}
+.phc .num{direction:ltr;font-size:34px;font-weight:700;letter-spacing:2px;margin:16px 0 18px;color:var(--maroon)}
+.phc .acts{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.phc .acts a,.phc .acts button{display:flex;flex-direction:column;align-items:center;gap:4px;border:0;border-radius:16px;padding:12px 6px;
+  font-size:15px;font-weight:700;text-decoration:none;color:#fff;background:linear-gradient(135deg,var(--g1),var(--g2));font-family:inherit}
+.phc .acts .wa{background:#1f9d55}
+.phc .acts button{background:var(--field);color:var(--ink,#2b2b2b)}
+.phc .none{color:var(--muted);font-size:17px;margin:16px 0 4px}
 .rs{background:var(--card);border-radius:14px;padding:9px 14px;margin-bottom:6px;display:flex;gap:10px;align-items:baseline}
 .rs small{color:var(--muted);min-width:24px}
 .rs span{flex:1}
@@ -300,6 +310,10 @@ input[type=date].ctl::-webkit-date-and-time-value{text-align:right}
       <button class="tile" id="goRoster">
         <span class="ic"><svg viewBox="0 0 24 24" width="30" height="30" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="7.5" r="3.2"/><path d="M3 20c.6-3.4 3-5.6 6-5.6s5.4 2.2 6 5.6"/><path d="M16 4.5h5M16 8.5h5M17.5 12.5h3.5"/></svg></span>
         <b>قائمة الطلاب</b><small>قوائم طلاب الصفوف، وحفظها Excel وWord وPDF</small>
+      </button>
+      <button class="tile" id="goPhones">
+        <span class="ic"><svg viewBox="0 0 24 24" width="30" height="30" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2.1 4.2 2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1.9.4 1.8.7 2.7a2 2 0 0 1-.5 2.1L8 9.8a16 16 0 0 0 6 6l1.3-1.3a2 2 0 0 1 2.1-.4c.9.3 1.8.6 2.7.7a2 2 0 0 1 1.7 2z"/></svg></span>
+        <b>أرقام الهواتف</b><small>رقم هاتف ولي أمر الطالب</small>
       </button>
     </div>
     <details class="install" id="installCard">
@@ -375,6 +389,18 @@ input[type=date].ctl::-webkit-date-and-time-value{text-align:right}
       <div class="dayname" id="rsScope" style="text-align:center"></div>
     </div>
     <div id="rosterWrap"></div>
+    <button class="back" data-home>› رجوع للخلف</button>
+  </section>
+
+  <!-- أرقام الهواتف -->
+  <section id="phoneView" class="hidden">
+    <h2 class="title">أرقام الهواتف</h2>
+    <div class="card">
+      <div class="field"><label for="phGrade">الصف</label><select class="ctl" id="phGrade"><option value="">اختر الصف</option></select></div>
+      <div class="field"><label for="phSection">الشعبة</label><select class="ctl" id="phSection" disabled><option value="">اختر الشعبة</option></select></div>
+      <div class="field"><label for="phStudent">اسم الطالب</label><select class="ctl" id="phStudent" disabled><option value="">اختر الطالب</option></select></div>
+    </div>
+    <div id="phoneWrap"></div>
     <button class="back" data-home>› رجوع للخلف</button>
   </section>
 
@@ -556,9 +582,9 @@ async function doLogin(){
 }
 $('loginBtn').onclick=doLogin;
 $('pass').addEventListener('keydown',e=>{ if(e.key==='Enter') doLogin(); });
-const VIEWS=['loginView','homeView','absView','recordView','logView','statsView','sysView','ttView','myTTView','genTTView','rosterView'];
+const VIEWS=['loginView','homeView','absView','recordView','logView','statsView','sysView','ttView','myTTView','genTTView','rosterView','phoneView'];
 function show(v){ VIEWS.forEach(x=>$(x).classList.toggle('hidden',x!==v)); window.scrollTo(0,0); }
-function logoutLocal(){ S.admin=false; S.viewAs=''; VA_LIST=null; store('absAdmin',null); store('absViewAs',null); vaSync(); lset('absTT',null); TT=null; ROSTER=null; store('absToken',null); S.token=null; SYS=null; show('loginView'); $('pass').value=''; $('listWrap').innerHTML=''; $('logWrap').innerHTML=''; }
+function logoutLocal(){ S.admin=false; S.viewAs=''; VA_LIST=null; store('absAdmin',null); store('absViewAs',null); vaSync(); lset('absTT',null); TT=null; ROSTER=null; PH={}; store('absToken',null); S.token=null; SYS=null; show('loginView'); $('pass').value=''; $('listWrap').innerHTML=''; $('logWrap').innerHTML=''; }
 // «رجوع للخلف» في رصد الغياب: من قائمة الطلاب يعود لاختيار الصف والشعبة، ومن الاختيار يعود للرئيسية
 $('recBack').onclick=()=>{
   if($('listWrap').innerHTML.trim()){
@@ -584,7 +610,7 @@ $('logoutBtn').onclick=()=>{ rawCall('logout',S.token,lget('absRemember')).catch
 /* ---- عرض صفحة معلم (لأصحاب الصلاحية) ---- */
 let VA_LIST=null, VA_BUSY=false;
 function resetUserState(){
-  SYS=null; TT=null; lset('absTT',null); S.sysVisited=true;
+  SYS=null; TT=null; lset('absTT',null); S.sysVisited=true; PH={}; if($('phoneWrap')) $('phoneWrap').innerHTML='';
   S.grade=''; S.section=''; S.students=[]; S.init={}; S.cur={}; S.backTo=null;
   $('listWrap').innerHTML=''; $('logWrap').innerHTML='';
   const sw=$('statsWrap'); if(sw) sw.innerHTML='';
@@ -1204,7 +1230,7 @@ $('genPdfAll').onclick=()=>{
 };
 
 /* ---- قائمة الطلاب ---- */
-let ROSTER=null, ROSTER_LOADING=null;
+let ROSTER=null, ROSTER_LOADING=null, PH={};
 const arCount=(n,one,few,many)=>n===1?one+' واحد':(n===2?(one==='طالب'?'طالبان':'شعبتان'):ar(n)+' '+(n>=3&&n<=10?few:many));
 const GNUM2={'السابع':7,'الثامن':8,'التاسع':9,'العاشر':10};
 function rosterLoad(){
@@ -1269,6 +1295,54 @@ function rsFmtSync(){
 }
 document.querySelectorAll('#rosterView .xbtn').forEach(b=>b.onclick=()=>{ RS_FMT=b.dataset.fmt; lset('absRsFmt',RS_FMT); rsFmtSync(); });
 rsFmtSync();
+/* ---- أرقام الهواتف: الصف ثم الشعبة ثم الطالب، فيظهر رقم ولي الأمر ---- */
+$('goPhones').onclick=async()=>{
+  show('phoneView');
+  const g=$('phGrade'), keep=g.value;
+  g.innerHTML='<option value="">اختر الصف</option>'+(S.classes||[]).map(c=>'<option>'+esc(c.grade)+'</option>').join('');
+  if(keep&&(S.classes||[]).some(c=>c.grade===keep)) g.value=keep; else g.value='';
+  phSections(true);
+  try{ await rosterLoad(); phStudents(true); }
+  catch(e){ $('phoneWrap').innerHTML='<div class="empty">تعذر تحميل أسماء الطلاب. <button class="ib" onclick="document.getElementById(\'goPhones\').click()">إعادة المحاولة</button></div>'; handleErr(e); }
+};
+function phSections(keep){
+  const s=$('phSection'), ks=s.value, c=(S.classes||[]).find(x=>x.grade===$('phGrade').value);
+  s.innerHTML='<option value="">اختر الشعبة</option>'+(c?c.sections.map(x=>'<option value="'+esc(x)+'">'+esc(c.grade)+' / '+ar(x)+'</option>').join(''):'');
+  s.disabled=!c; if(keep&&c&&c.sections.map(String).indexOf(ks)>-1) s.value=ks;
+  phStudents(keep);
+}
+function phStudents(keep){
+  const st=$('phStudent'), ks=st.value, g=$('phGrade').value, s=$('phSection').value;
+  const rows=(ROSTER||[]).filter(r=>g&&s&&r[0]===g&&String(r[1])===String(s));
+  st.innerHTML='<option value="">'+(g&&s&&!ROSTER?'جارٍ تحميل الأسماء…':'اختر الطالب')+'</option>'+rows.map(r=>'<option value="'+esc(r[4])+'">'+ar(r[2])+'. '+esc(r[3])+'</option>').join('');
+  st.disabled=!rows.length;
+  if(keep&&rows.some(r=>String(r[4])===ks)){ st.value=ks; phShow(); }
+  else $('phoneWrap').innerHTML=g&&s?'':'<div class="empty">اختر الصف والشعبة واسم الطالب لعرض رقم هاتف ولي أمره.</div>';
+}
+$('phGrade').onchange=()=>phSections(false);
+$('phSection').onchange=()=>phStudents(false);
+$('phStudent').onchange=()=>phShow();
+async function phShow(){
+  const w=$('phoneWrap'), g=$('phGrade').value, s=$('phSection').value, id=$('phStudent').value;
+  if(!id){ w.innerHTML=''; return; }
+  const r=(ROSTER||[]).find(x=>String(x[4])===id)||[];
+  let d=PH[id];
+  if(!d){
+    w.innerHTML='<div class="empty">جارٍ إحضار الرقم…</div>';
+    try{ d=PH[id]=await call('getPhone',S.token,g,s,id); }
+    catch(e){ if($('phStudent').value===id){ w.innerHTML='<div class="empty">تعذر إحضار الرقم.</div>'; handleErr(e); } return; }
+    if($('phStudent').value!==id) return;              // غيّر المعلم اختياره أثناء التحميل
+  }
+  const num=String(d.phone||'').replace(/\D/g,''), intl=num.length===8?'968'+num:num;
+  w.innerHTML='<div class="phc"><div class="nm">'+esc(d.name||r[3]||'')+'</div><div class="cl">'+esc(g)+' / '+ar(s)+'</div>'+
+    (num?'<div class="num">'+esc(num)+'</div><div class="acts">'+
+      '<a href="tel:'+(num.length===8?'+968':'')+num+'">اتصال</a>'+
+      '<a class="wa" href="https://wa.me/'+intl+'" target="_blank" rel="noopener">واتساب</a>'+
+      '<button type="button" id="phCopy">نسخ الرقم</button></div>'
+      :'<div class="none">لا يوجد رقم هاتف مسجل لهذا الطالب.</div>')+'</div>';
+  if(num) $('phCopy').onclick=()=>copyText(num);
+  try{ w.firstChild.scrollIntoView({behavior:'smooth',block:'nearest'}); }catch(e){}
+}
 $('rsSave').onclick=async()=>{
   if(!RS_FMT){ toast('اختر صيغة الحفظ.',true); return; }
   if(!ROSTER){ try{ await rosterLoad(); }catch(e){ handleErr(e); return; } }
