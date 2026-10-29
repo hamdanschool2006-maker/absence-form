@@ -169,6 +169,14 @@
       try { action(f); } catch (e) { clearTimeout(t); f.onload = null; rej(e); }
     });
   }
+  function sleep(ms) { return new Promise(function (r) { setTimeout(r, ms); }); }
+  // ينتظر حتى يتحقق الشرط (القوائم في صفحة الوزارة تُملأ بعد التحميل)، ويعيد true أو false
+  function waitFor(fn, ms) {
+    var t0 = Date.now();
+    return (function loop() { var ok = false; try { ok = fn(); } catch (e) {} return ok ? Promise.resolve(true) : (Date.now() - t0 > ms ? Promise.resolve(false) : sleep(250).then(loop)); })();
+  }
+  function hasOpt(sel, v) { if (!sel) return false; for (var k = 0; k < sel.options.length; k++) if (sel.options[k].value === v) return true; return false; }
+  function fire(el) { try { el.dispatchEvent(new (el.ownerDocument.defaultView.Event)('change', { bubbles: true })); } catch (e) { try { if (el.onchange) el.onchange(); } catch (e2) {} } }
   function setSel(sel, value, text) {
     var found = false;
     for (var k = 0; k < sel.options.length; k++) if (sel.options[k].value === value) found = true;
@@ -195,16 +203,35 @@
       logEl.appendChild(line);
       var p = doc ? Promise.resolve(doc) : first;
       p.then(function (d) {
-        return step(function () {
-          setSel(d.getElementById('SchoolFilterCtrl1_ddlGrades'), gradeVal, gradeTxt);
-          setSel(d.getElementById('SchoolFilterCtrl1_ddlClasses'), c.value, c.sec);
-          d.getElementById('txtDate').value = DMY;
-          click(d, 'btnOpenAttendanceSheet');
+        var gS = d.getElementById('SchoolFilterCtrl1_ddlGrades'), cS = d.getElementById('SchoolFilterCtrl1_ddlClasses');
+        // اختيار الصف ثم الشعبة كما يفعل المستخدم، وانتظار تحميل الشعب
+        var ready = Promise.resolve();
+        if (selVal(d, 'SchoolFilterCtrl1_ddlGrades') !== gradeVal) {
+          ready = waitFor(function () { return hasOpt(d.getElementById('SchoolFilterCtrl1_ddlGrades'), gradeVal); }, 15000).then(function () {
+            gS = d.getElementById('SchoolFilterCtrl1_ddlGrades'); gS.value = gradeVal; fire(gS);
+          });
+        }
+        return ready.then(function () {
+          return waitFor(function () { return hasOpt(d.getElementById('SchoolFilterCtrl1_ddlClasses'), c.value); }, 15000);
+        }).then(function (okC) {
+          return step(function () {
+            gS = d.getElementById('SchoolFilterCtrl1_ddlGrades'); cS = d.getElementById('SchoolFilterCtrl1_ddlClasses');
+            if (gS.value !== gradeVal) setSel(gS, gradeVal, gradeTxt);
+            if (okC) { cS.value = c.value; fire(cS); } else setSel(cS, c.value, c.sec);
+            d.getElementById('txtDate').value = DMY;
+            click(d, 'btnOpenAttendanceSheet');
+          });
         });
       }).then(function (d) {
         doc = d;
-        if (selVal(d, 'SchoolFilterCtrl1_ddlClasses') !== c.value || selVal(d, 'SchoolFilterCtrl1_ddlGrades') !== gradeVal || d.getElementById('txtDate').value.trim() !== DMY)
-          throw new Error('لم يُفتح كشف هذه الشعبة كما يجب.');
+        // انتظار استقرار قوائم الصف والشعبة بعد التحميل
+        return waitFor(function () { return selVal(d, 'SchoolFilterCtrl1_ddlClasses') === c.value && selVal(d, 'SchoolFilterCtrl1_ddlGrades') === gradeVal; }, 8000).then(function () { return d; });
+      }).then(function (d) {
+        var fc = selVal(d, 'SchoolFilterCtrl1_ddlClasses'), fg = selVal(d, 'SchoolFilterCtrl1_ddlGrades'), fd = d.getElementById('txtDate').value.trim();
+        if (fc !== c.value || fg !== gradeVal || fd !== DMY) {
+          var cs = d.getElementById('SchoolFilterCtrl1_ddlClasses'), gs = d.getElementById('SchoolFilterCtrl1_ddlGrades');
+          throw new Error('لم يُفتح كشف هذه الشعبة كما يجب. (المطلوب: ' + gradeTxt + ' / ' + c.sec + ' / ' + DMY + ' — الظاهر: ' + selText(gs) + ' / ' + (selText(cs) || '—') + ' / ' + fd + ')');
+        }
         var pg = d.getElementById('ctl02_ddlCurrentPage');
         if (pg && pg.options.length > 1) throw new Error('الكشف مقسّم على أكثر من صفحة. اختر «عرض ٥٠» في الصفحة ثم أعد المحاولة.');
         var rows = gridRows(d); if (!rows.length) throw new Error('لا يوجد طلاب في كشف الوزارة لهذه الشعبة.');
