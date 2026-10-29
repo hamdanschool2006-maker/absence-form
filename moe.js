@@ -196,13 +196,8 @@
     var gSel = $('SchoolFilterCtrl1_ddlGrades'), gradeVal = selVal(document, 'SchoolFilterCtrl1_ddlGrades'), gradeTxt = selText(gSel);
     var i = 0;
     var first = step(function (f) { f.src = location.href.split('#')[0]; });
-    function next() {
-      if (i >= list.length) return finish();
-      var c = list[i++], names = DATA.secs[c.sec] || [];
-      var line = document.createElement('div'); line.className = 's'; line.innerHTML = '<b>' + esc(G) + ' / ' + ar(c.sec) + '</b> <span class="mu">جارٍ فتح الكشف…</span>';
-      logEl.appendChild(line);
-      var p = doc ? Promise.resolve(doc) : first;
-      p.then(function (d) {
+    function openClass(d, c) {
+      return Promise.resolve(d).then(function (d) {
         var gS = d.getElementById('SchoolFilterCtrl1_ddlGrades'), cS = d.getElementById('SchoolFilterCtrl1_ddlClasses');
         // اختيار الصف ثم الشعبة كما يفعل المستخدم، وانتظار تحميل الشعب
         var ready = Promise.resolve();
@@ -232,6 +227,16 @@
           var cs = d.getElementById('SchoolFilterCtrl1_ddlClasses'), gs = d.getElementById('SchoolFilterCtrl1_ddlGrades');
           throw new Error('لم يُفتح كشف هذه الشعبة كما يجب. (المطلوب: ' + gradeTxt + ' / ' + c.sec + ' / ' + DMY + ' — الظاهر: ' + selText(gs) + ' / ' + (selText(cs) || '—') + ' / ' + fd + ')');
         }
+        return d;
+      });
+    }
+    function next() {
+      if (i >= list.length) return finish();
+      var c = list[i++], names = DATA.secs[c.sec] || [];
+      var line = document.createElement('div'); line.className = 's'; line.innerHTML = '<b>' + esc(G) + ' / ' + ar(c.sec) + '</b> <span class="mu">جارٍ فتح الكشف…</span>';
+      logEl.appendChild(line);
+      var p = doc ? Promise.resolve(doc) : first;
+      p.then(function (d) { return openClass(d, c); }).then(function (d) {
         var pg = d.getElementById('ctl02_ddlCurrentPage');
         if (pg && pg.options.length > 1) throw new Error('الكشف مقسّم على أكثر من صفحة. اختر «عرض ٥٠» في الصفحة ثم أعد المحاولة.');
         var rows = gridRows(d); if (!rows.length) throw new Error('لا يوجد طلاب في كشف الوزارة لهذه الشعبة.');
@@ -251,15 +256,34 @@
         line.querySelector('.mu').textContent = 'جارٍ الحفظ…';
         return step(function () { click(d, 'btnSaveSheet'); }).then(function (d2) {
           doc = d2;
-          var ok = (d2.body.textContent || '').indexOf(SAVED_TXT) > -1;
-          if (!ok) {
-            var al = (IFR.contentWindow.__hmAlerts || []).join(' | ');
-            throw new Error('لم تظهر رسالة «تم تسجيل الحضور والغياب»؛ تحقّق من هذه الشعبة يدويًا.' + (al ? ' رسالة الصفحة: ' + al : ''));
-          }
+          var found = function () {
+            var docs = [d2]; try { var fr = d2.querySelectorAll('iframe'); for (var q = 0; q < fr.length; q++) { try { if (fr[q].contentDocument) docs.push(fr[q].contentDocument); } catch (e) {} } } catch (e) {}
+            return docs.some(function (x) { return x.body && (x.body.textContent || '').indexOf(SAVED_TXT) > -1; }) ||
+              (IFR.contentWindow.__hmAlerts || []).some(function (m) { return m.indexOf(SAVED_TXT) > -1; });
+          };
+          return waitFor(found, 6000).then(function (ok) {
+            if (ok || !done.length) return ok ? 'msg' : 'none';
+            // لم تظهر الرسالة: يُعاد فتح الكشف للتأكد من أن الغائبين محفوظون فعلًا في نظام الوزارة
+            line.querySelector('.mu') && (line.querySelector('.mu').textContent = 'جارٍ التحقق من الحفظ…');
+            return openClass(d2, c).then(function (d3) {
+              var rows3 = gridRows(d3), bad = [];
+              done.forEach(function (nm) {
+                var r = matchRow(nm, rows3), h = r && d3.getElementById(r.pre + '_dbAttendanceStatusHidden');
+                if (!r || !((h && h.value === 'a') || r.sel.value === 'a')) bad.push(nm);
+              });
+              if (bad.length) {
+                var al = (IFR.contentWindow.__hmAlerts || []).join(' | ');
+                throw new Error('لم يُحفظ الغياب في البوابة التعليمية لـ ' + bad.length + ' طالب؛ تحقّق من هذه الشعبة يدويًا.' + (al ? ' رسالة الصفحة: ' + al : ''));
+              }
+              return 'verified';
+            });
+          }).then(function (how) {
           var h = '<b>' + esc(G) + ' / ' + ar(c.sec) + '</b> <span class="ok">✔ حُفظ</span> — ' + ar(done.length) + ' غائب';
           if (already.length) h += '<div class="mu">مسجّلون غائبين مسبقًا: ' + already.map(esc).join('، ') + '</div>';
           if (miss.length) h += '<div class="er">لم يُعثر عليهم في كشف الوزارة (أدخلهم يدويًا):<ul><li>' + miss.map(esc).join('</li><li>') + '</li></ul></div>';
+          if (how === 'verified') h += '<div class="mu">تأكدنا بإعادة فتح الكشف أن الغياب محفوظ.</div>';
           line.innerHTML = h; report.push({ sec: c.sec, ok: true, miss: miss.length });
+          });
         });
       }).catch(function (e) {
         line.innerHTML = '<b>' + esc(G) + ' / ' + ar(c.sec) + '</b> <span class="er">✖ ' + esc(e.message) + '</span>';
