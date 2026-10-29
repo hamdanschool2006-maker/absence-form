@@ -98,58 +98,6 @@
     return bestS && bestS > second ? best : null;
   }
 
-  /* ---------- إرسال النموذج كما يفعل المتصفح ---------- */
-  var CS = (document.characterSet || 'utf-8').toLowerCase();
-  var ENC = null;   // جدول ترميز windows-1256 إن كانت الصفحة به
-  if (/1256|arabic/.test(CS)) {
-    ENC = {}; var dec = new TextDecoder('windows-1256');
-    for (var b = 128; b < 256; b++) ENC[dec.decode(new Uint8Array([b]))] = b;
-  }
-  function encPart(v) {
-    if (!ENC) return encodeURIComponent(v);
-    var out = '';
-    for (var i = 0; i < v.length; i++) {
-      var c = v[i], code = c.charCodeAt(0);
-      if (/[A-Za-z0-9\-_.*]/.test(c)) out += c;
-      else if (c === ' ') out += '+';
-      else if (code < 128) out += '%' + ('0' + code.toString(16).toUpperCase()).slice(-2);
-      else if (ENC[c] !== undefined) out += '%' + ENC[c].toString(16).toUpperCase();
-      else out += '%3F';
-    }
-    return out;
-  }
-  function serialize(form, opts) {
-    var parts = [], els = form.elements;
-    for (var i = 0; i < els.length; i++) {
-      var el = els[i], nm = el.name, t = (el.type || '').toLowerCase();
-      if (!nm || el.disabled || el.hasAttribute('disabled')) continue;
-      if (t === 'image' || t === 'submit' || t === 'button' || t === 'reset' || t === 'file') continue;
-      if (opts.skip && opts.skip(nm)) continue;
-      var v;
-      if (opts.set && Object.prototype.hasOwnProperty.call(opts.set, nm)) v = opts.set[nm];
-      else if (t === 'checkbox' || t === 'radio') { if (!el.checked) continue; v = el.getAttribute('value') || 'on'; }
-      else if (el.tagName === 'SELECT') { var o = el.options[el.selectedIndex]; if (!o) continue; v = o.value; }
-      else v = el.value;
-      parts.push(encPart(nm) + '=' + encPart(String(v)));
-    }
-    parts.push(encPart(opts.click + '.x') + '=7', encPart(opts.click + '.y') + '=7');
-    return parts.join('&');
-  }
-  var ACTION = new URL(form0.getAttribute('action') || location.href, location.href).href;
-  function post(body) {
-    return fetch(ACTION, { method: 'POST', credentials: 'include', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: body })
-      .then(function (r) {
-        if (!r.ok) throw new Error('رد البوابة التعليمية: ' + r.status);
-        var m = /charset=([^;]+)/i.exec(r.headers.get('content-type') || '');
-        return r.arrayBuffer().then(function (buf) {
-          var cs = m ? m[1].trim() : CS, txt;
-          try { txt = new TextDecoder(cs).decode(buf); } catch (e) { txt = new TextDecoder('utf-8').decode(buf); }
-          var d = new DOMParser().parseFromString(txt, 'text/html');
-          if (!d.getElementById('Form1')) throw new Error('انتهت جلسة البوابة التعليمية أو تغيّرت الصفحة. أعد تحميل الصفحة وسجّل الدخول.');
-          return d;
-        });
-      });
-  }
   function selVal(d, id) { var s = d.getElementById(id); return s && s.options[s.selectedIndex] ? s.options[s.selectedIndex].value : ''; }
   function gridRows(d) {
     var out = [];
@@ -191,21 +139,70 @@
     $('hmRe').onclick = start;
     $('hmGo').onclick = function () { run($('hmAll').checked); };
   }
+  /* ---------- التنفيذ: الصفحة الحقيقية داخل إطار مخفي، تمامًا كما يضغط المستخدم ---------- */
+  var IFR = null;
+  function frame() {
+    if (IFR) return IFR;
+    IFR = document.createElement('iframe');
+    IFR.style.cssText = 'position:fixed;left:-4000px;top:0;width:1200px;height:900px;border:0;visibility:hidden';
+    document.body.appendChild(IFR);
+    return IFR;
+  }
+  function tame(w) {   // نوافذ التنبيه داخل الإطار لا توقف العمل
+    try { w.alert = function (m) { w.__hmAlerts = (w.__hmAlerts || []).concat(String(m)); }; w.confirm = function () { return true; }; } catch (e) {}
+  }
+  // ينفّذ action ثم ينتظر تحميل الصفحة الجديدة داخل الإطار
+  function step(action) {
+    var f = frame();
+    return new Promise(function (res, rej) {
+      var t = setTimeout(function () { f.onload = null; rej(new Error('انتهت مهلة انتظار البوابة التعليمية (٩٠ ثانية).')); }, 90000);
+      f.onload = function () {
+        clearTimeout(t); f.onload = null;
+        var d; try { d = f.contentDocument; } catch (e) { rej(new Error('تعذر قراءة صفحة البوابة التعليمية.')); return; }
+        tame(f.contentWindow);
+        if (!d || !d.getElementById('Form1')) {
+          var info = d ? ((d.title || '') + ' — ' + (d.body ? d.body.textContent.replace(/\s+/g, ' ').trim().slice(0, 160) : '')) : '';
+          rej(new Error('لم تظهر صفحة الغياب (ربما انتهت جلسة البوابة التعليمية). ' + info)); return;
+        }
+        res(d);
+      };
+      try { action(f); } catch (e) { clearTimeout(t); f.onload = null; rej(e); }
+    });
+  }
+  function setSel(sel, value, text) {
+    var found = false;
+    for (var k = 0; k < sel.options.length; k++) if (sel.options[k].value === value) found = true;
+    if (!found) { var o = sel.ownerDocument.createElement('option'); o.value = value; o.text = text || value; sel.appendChild(o); }
+    sel.value = value;
+  }
+  function click(d, id) {
+    var b = d.getElementById(id);
+    if (!b) throw new Error('لم يُعثر على زر ' + (id === 'btnSaveSheet' ? '«حفظ»' : '«عرض»') + ' في الصفحة.');
+    b.click();
+  }
   function run(saveEmpty) {
     busy = true;
     var list = CLS.filter(function (c) { return saveEmpty || (DATA.secs[c.sec] || []).length; });
-    bd.innerHTML = '<div id="hmProg">جارٍ الإدخال… لا تغلق الصفحة.</div><div id="hmLog"></div>';
-    var logEl = $('hmLog'), doc = document, report = [];
-    var gradeVal = selVal(document, 'SchoolFilterCtrl1_ddlGrades');
+    bd.innerHTML = '<div id="hmProg">جارٍ الإدخال… لا تغلق الصفحة ولا تنتقل منها.</div><div id="hmLog"></div>';
+    var logEl = $('hmLog'), report = [], doc = null;
+    var gSel = $('SchoolFilterCtrl1_ddlGrades'), gradeVal = selVal(document, 'SchoolFilterCtrl1_ddlGrades'), gradeTxt = selText(gSel);
     var i = 0;
+    var first = step(function (f) { f.src = location.href.split('#')[0]; });
     function next() {
       if (i >= list.length) return finish();
       var c = list[i++], names = DATA.secs[c.sec] || [];
       var line = document.createElement('div'); line.className = 's'; line.innerHTML = '<b>' + esc(G) + ' / ' + ar(c.sec) + '</b> <span class="mu">جارٍ فتح الكشف…</span>';
       logEl.appendChild(line);
-      var setO = {}; setO['SchoolFilterCtrl1$ddlClasses'] = c.value; setO['txtDate'] = DMY;
-      var body = serialize(doc.getElementById('Form1'), { click: 'btnOpenAttendanceSheet', set: setO, skip: function (n) { return n.indexOf('dgAttendanceSheet$') === 0; } });
-      post(body).then(function (d) {
+      var p = doc ? Promise.resolve(doc) : first;
+      p.then(function (d) {
+        return step(function () {
+          setSel(d.getElementById('SchoolFilterCtrl1_ddlGrades'), gradeVal, gradeTxt);
+          setSel(d.getElementById('SchoolFilterCtrl1_ddlClasses'), c.value, c.sec);
+          d.getElementById('txtDate').value = DMY;
+          click(d, 'btnOpenAttendanceSheet');
+        });
+      }).then(function (d) {
+        doc = d;
         if (selVal(d, 'SchoolFilterCtrl1_ddlClasses') !== c.value || selVal(d, 'SchoolFilterCtrl1_ddlGrades') !== gradeVal || d.getElementById('txtDate').value.trim() !== DMY)
           throw new Error('لم يُفتح كشف هذه الشعبة كما يجب.');
         var pg = d.getElementById('ctl02_ddlCurrentPage');
@@ -216,17 +213,22 @@
           var r = matchRow(nm, rows);
           if (!r) { miss.push(nm); return; }
           if (r.sel.value === 'a') { already.push(nm); return; }
-          for (var k = 0; k < r.sel.options.length; k++) r.sel.options[k].selected = r.sel.options[k].value === 'a';
+          r.sel.value = 'a';
+          try { if (typeof r.sel.onchange === 'function') r.sel.onchange(); else r.sel.dispatchEvent(new Event('change', { bubbles: true })); } catch (e) {}
+          if (r.sel.value !== 'a') { miss.push(nm + ' (رفضت الصفحة تغييره)'); return; }
           var cbs = d.querySelectorAll('#' + r.pre + '_cblSessions input[type=checkbox]');
-          for (var k2 = 0; k2 < cbs.length; k2++) { cbs[k2].checked = false; cbs[k2].setAttribute('disabled', 'disabled'); }
-          var h = d.getElementById(r.pre + '_selectedAbsenceReasonHidden'); if (h) h.value = '1';
+          for (var k = 0; k < cbs.length; k++) { cbs[k].checked = false; cbs[k].disabled = true; }
+          var h = d.getElementById(r.pre + '_selectedAbsenceReasonHidden'); if (h && !h.value) h.value = '1';
           done.push(nm);
         });
         line.querySelector('.mu').textContent = 'جارٍ الحفظ…';
-        return post(serialize(d.getElementById('Form1'), { click: 'btnSaveSheet' })).then(function (d2) {
-          var ok = (d2.body.textContent || '').indexOf(SAVED_TXT) > -1;
-          if (!ok) throw new Error('لم تظهر رسالة «تم التسجيل» من البوابة التعليمية؛ تحقّق من هذه الشعبة يدويًا.');
+        return step(function () { click(d, 'btnSaveSheet'); }).then(function (d2) {
           doc = d2;
+          var ok = (d2.body.textContent || '').indexOf(SAVED_TXT) > -1;
+          if (!ok) {
+            var al = (IFR.contentWindow.__hmAlerts || []).join(' | ');
+            throw new Error('لم تظهر رسالة «تم تسجيل الحضور والغياب»؛ تحقّق من هذه الشعبة يدويًا.' + (al ? ' رسالة الصفحة: ' + al : ''));
+          }
           var h = '<b>' + esc(G) + ' / ' + ar(c.sec) + '</b> <span class="ok">✔ حُفظ</span> — ' + ar(done.length) + ' غائب';
           if (already.length) h += '<div class="mu">مسجّلون غائبين مسبقًا: ' + already.map(esc).join('، ') + '</div>';
           if (miss.length) h += '<div class="er">لم يُعثر عليهم في كشف الوزارة (أدخلهم يدويًا):<ul><li>' + miss.map(esc).join('</li><li>') + '</li></ul></div>';
@@ -235,14 +237,14 @@
       }).catch(function (e) {
         line.innerHTML = '<b>' + esc(G) + ' / ' + ar(c.sec) + '</b> <span class="er">✖ ' + esc(e.message) + '</span>';
         report.push({ sec: c.sec, ok: false });
-        if (/انتهت جلسة/.test(e.message)) { i = list.length; }
+        if (/جلسة|مهلة/.test(e.message)) { doc = null; first = step(function (f) { f.src = location.href.split('#')[0]; }); }
       }).then(next);
     }
     function finish() {
       busy = false;
       var ok = report.filter(function (r) { return r.ok; }).length, bad = report.length - ok, miss = report.reduce(function (a, r) { return a + (r.miss || 0); }, 0);
-      $('hmProg').innerHTML = '<b>' + (bad ? '<span class="er">انتهى مع ملاحظات</span>' : '<span class="ok">تم الانتهاء</span>') + '</b>: حُفظت ' + ar(ok) + ' شعبة' +
-        (bad ? '، وتعذّرت ' + ar(bad) : '') + (miss ? '، و' + ar(miss) + ' طالب يحتاج إدخالًا يدويًا' : '') + '.';
+      $('hmProg').innerHTML = '<b>' + (bad ? '<span class="er">انتهى مع ملاحظات</span>' : '<span class="ok">تم الانتهاء</span>') + '</b>: حُفظت ' + ar(ok) + ' من ' + ar(report.length) + ' شعب' +
+        (miss ? '، و' + ar(miss) + ' طالب يحتاج إدخالًا يدويًا' : '') + '.';
       var b = document.createElement('button'); b.className = 'btn g'; b.textContent = 'إعادة تحميل الصفحة لمراجعة الكشوف';
       b.onclick = function () { location.reload(); }; bd.appendChild(b);
     }
