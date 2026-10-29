@@ -169,6 +169,7 @@
       try { action(f); } catch (e) { clearTimeout(t); f.onload = null; rej(e); }
     });
   }
+  function clsNum(d) { var s = d.getElementById('SchoolFilterCtrl1_ddlClasses'); var t = s && s.options[s.selectedIndex] ? s.options[s.selectedIndex].text : ''; return t.replace(/[٠-٩]/g, function (x) { return AR.indexOf(x); }).trim(); }
   function sleep(ms) { return new Promise(function (r) { setTimeout(r, ms); }); }
   // ينتظر حتى يتحقق الشرط (القوائم في صفحة الوزارة تُملأ بعد التحميل)، ويعيد true أو false
   function waitFor(fn, ms) {
@@ -202,32 +203,44 @@
         var cEl = function () { return d.getElementById('SchoolFilterCtrl1_ddlClasses'); };
         // اختيار الصف ثم الشعبة كما يفعل المستخدم: القوائم في صفحة الوزارة تُملأ تلقائيًا بعد التحميل،
         // فننتظر هدوءها، ثم نختار الصف وننتظر ظهور شعبه، ونعيد المحاولة إن أعادتها الصفحة إلى صف آخر
+        var numTxt = function (o) { return o.text.replace(/[٠-٩]/g, function (x) { return AR.indexOf(x); }).trim(); };
+        var snap = function () { var s = cEl(), v = []; for (var k = 0; k < s.options.length; k++) v.push(s.options[k].value); return v.join(','); };
+        var before = '', fired = false;
+        // الشعبة في صفحة الإطار: بالقيمة نفسها، أو برقمها إذا كانت قائمة الشعب قد أُعيد تحميلها للصف المطلوب
+        var pick = function () {
+          var s = cEl(); if (!s || gEl().value !== gradeVal) return null;
+          for (var k = 0; k < s.options.length; k++) if (s.options[k].value === c.value) return s.options[k].value;
+          if (!fired || snap() === before) return null;
+          for (var k2 = 0; k2 < s.options.length; k2++) if (numTxt(s.options[k2]) === c.sec) return s.options[k2].value;
+          return null;
+        };
         var attempt = function (n) {
           var g = gEl();
-          if (g.value !== gradeVal) { if (!hasOpt(g, gradeVal)) return Promise.resolve(false); g.value = gradeVal; fire(g); }
-          return waitFor(function () { return gEl().value === gradeVal && hasOpt(cEl(), c.value); }, 12000).then(function (ok) {
-            if (ok) return sleep(700).then(function () { return gEl().value === gradeVal && hasOpt(cEl(), c.value) ? true : (n < 4 ? attempt(n + 1) : false); });
-            return n < 4 ? sleep(1500).then(function () { return attempt(n + 1); }) : false;
+          if (!hasOpt(g, gradeVal)) return Promise.resolve(null);
+          if (g.value !== gradeVal || (n > 1 && !pick())) { before = snap(); g.value = gradeVal; fire(g); fired = true; }
+          return waitFor(function () { return !!pick(); }, 12000).then(function (ok) {
+            if (ok) return sleep(800).then(function () { var v = pick(); return v ? v : (n < 4 ? attempt(n + 1) : null); });
+            return n < 4 ? sleep(1500).then(function () { return attempt(n + 1); }) : null;
           });
         };
         return waitFor(function () { return gEl() && gEl().options.length && cEl() && cEl().options.length; }, 15000)
           .then(function () { return sleep(1500); })
           .then(function () { return attempt(1); })
-          .then(function (ok) {
-            if (!ok) throw new Error('تعذر اختيار ' + gradeTxt + ' / ' + c.sec + ' في صفحة الوزارة (الظاهر: ' + selText(gEl()) + ').');
-            var cs = cEl(); cs.value = c.value; fire(cs);
-            return sleep(400);
-          }).then(function () {
-            if (gEl().value !== gradeVal || cEl().value !== c.value) throw new Error('تغيّر اختيار الصف في صفحة الوزارة قبل العرض؛ أعد المحاولة.');
-            return step(function () { d.getElementById('txtDate').value = DMY; click(d, 'btnOpenAttendanceSheet'); });
+          .then(function (cv) {
+            if (!cv) throw new Error('تعذر اختيار ' + gradeTxt + ' / ' + c.sec + ' في صفحة الوزارة (الظاهر: ' + selText(gEl()) + ' / ' + (selText(cEl()) || '—') + '، عدد الشعب في القائمة: ' + cEl().options.length + ').');
+            var cs = cEl(); cs.value = cv; fire(cs);
+            return sleep(400).then(function () {
+              if (gEl().value !== gradeVal || cEl().value !== cv) throw new Error('تغيّر اختيار الصف في صفحة الوزارة قبل العرض؛ أعد المحاولة.');
+              return step(function () { d.getElementById('txtDate').value = DMY; click(d, 'btnOpenAttendanceSheet'); });
+            });
           });
       }).then(function (d) {
         doc = d;
         // انتظار استقرار قوائم الصف والشعبة بعد التحميل
-        return waitFor(function () { return selVal(d, 'SchoolFilterCtrl1_ddlClasses') === c.value && selVal(d, 'SchoolFilterCtrl1_ddlGrades') === gradeVal; }, 8000).then(function () { return d; });
+        return waitFor(function () { return clsNum(d) === c.sec && selVal(d, 'SchoolFilterCtrl1_ddlGrades') === gradeVal; }, 8000).then(function () { return d; });
       }).then(function (d) {
-        var fc = selVal(d, 'SchoolFilterCtrl1_ddlClasses'), fg = selVal(d, 'SchoolFilterCtrl1_ddlGrades'), fd = d.getElementById('txtDate').value.trim();
-        if (fc !== c.value || fg !== gradeVal || fd !== DMY) {
+        var fc = clsNum(d), fg = selVal(d, 'SchoolFilterCtrl1_ddlGrades'), fd = d.getElementById('txtDate').value.trim();
+        if (fc !== c.sec || fg !== gradeVal || fd !== DMY) {
           var cs = d.getElementById('SchoolFilterCtrl1_ddlClasses'), gs = d.getElementById('SchoolFilterCtrl1_ddlGrades');
           throw new Error('لم يُفتح كشف هذه الشعبة كما يجب. (المطلوب: ' + gradeTxt + ' / ' + c.sec + ' / ' + DMY + ' — الظاهر: ' + selText(gs) + ' / ' + (selText(cs) || '—') + ' / ' + fd + ')');
         }
@@ -257,6 +270,7 @@
           var h = d.getElementById(r.pre + '_selectedAbsenceReasonHidden'); if (h && !h.value) h.value = '1';
           done.push(nm);
         });
+        if (names.length && !done.length && !already.length) throw new Error('لم يُطابَق أي اسم من الغائبين مع كشف الوزارة، فلم يُحفظ شيء (تأكد أن الكشف المفتوح للشعبة الصحيحة). الأسماء: ' + names.join('، '));
         line.querySelector('.mu').textContent = 'جارٍ الحفظ…';
         return step(function () { click(d, 'btnSaveSheet'); }).then(function (d2) {
           doc = d2;
