@@ -69,11 +69,7 @@
     return '';
   }
   function toYmd(dmy) { var m = /^(\d{1,2})\/(\d{1,2})\/(\d{4})$/.exec(String(dmy).trim()); return m ? m[3] + '-' + ('0' + m[2]).slice(-2) + '-' + ('0' + m[1]).slice(-2) : ''; }
-  function classList() {
-    var s = $('SchoolFilterCtrl1_ddlClasses'), out = [];
-    for (var i = 0; i < s.options.length; i++) { var n = s.options[i].text.replace(/[٠-٩]/g, function (d) { return AR.indexOf(d); }).trim(); if (/^\d+$/.test(n)) out.push({ value: s.options[i].value, sec: n }); }
-    return out;
-  }
+
 
   /* ---------- مطابقة الأسماء ---------- */
   function norm(s) {
@@ -111,33 +107,84 @@
   }
 
   /* ---------- الخطوات ---------- */
-  var DATA = null, G = '', DMY = '', CLS = [];
+  var DATA = null, ITEMS = [];
+  var pad = function (n) { return ('0' + n).slice(-2); };
+  function toDmy(ymd) { var p = ymd.split('-'); return p[2] + '/' + p[1] + '/' + p[0]; }
+  function dayName(ymd) { return ['الأحد', 'الاثنين', 'الثلاثاء', 'الأربعاء', 'الخميس', 'الجمعة', 'السبت'][new Date(ymd + 'T00:00:00Z').getUTCDay()]; }
+  function arDate(ymd) { return ar(toDmy(ymd)); }
+  // صفوف الوزارة المتاحة في القائمة: { 'السابع': {value, text} }
+  function minGrades() {
+    var s = $('SchoolFilterCtrl1_ddlGrades'), out = {};
+    for (var i = 0; i < s.options.length; i++) for (var j = 0; j < GRADES.length; j++)
+      if (s.options[i].text.indexOf(GRADES[j]) > -1 && !out[GRADES[j]]) out[GRADES[j]] = { value: s.options[i].value, text: s.options[i].text.trim() };
+    return out;
+  }
+  function lget(k) { try { return localStorage.getItem(k); } catch (e) { return null; } }
+  function lset(k, v) { try { localStorage.setItem(k, v); } catch (e) {} }
   function start() {
     if (!sget('hmMoeTok')) { loginView(''); return; }
-    G = curGrade(); DMY = $('txtDate').value.trim(); CLS = classList();
-    var ymd = toYmd(DMY);
-    if (!G) { bd.innerHTML = '<div class="er">اختر <b>الصف</b> في الصفحة (السابع إلى العاشر)، ثم اضغط الزر مرة أخرى.</div><button class="btn g" id="hmRe">تحديث</button>'; $('hmRe').onclick = start; return; }
-    if (!ymd) { bd.innerHTML = '<div class="er">اكتب <b>التاريخ</b> في الصفحة بصيغة يوم/شهر/سنة.</div><button class="btn g" id="hmRe">تحديث</button>'; $('hmRe').onclick = start; return; }
-    if (!CLS.length) { bd.innerHTML = '<div class="er">لم تظهر شعب الصف في الصفحة بعد. انتظر لحظة ثم اضغط «تحديث».</div><button class="btn g" id="hmRe">تحديث</button>'; $('hmRe').onclick = start; return; }
-    bd.innerHTML = '<div>جارٍ إحضار غياب <b>' + esc(G) + '</b> ليوم <b>' + esc(DMY) + '</b> من بوابة المعلم…</div>';
-    api('moeAbsences', [sget('hmMoeTok'), G, ymd]).then(function (r) { DATA = r; review(); })
-      .catch(function (e) { if (/انتهت الجلسة|سجّل الدخول/.test(e.message)) { sset('hmMoeTok', null); loginView(e.message); } else bd.innerHTML = '<div class="er">' + esc(e.message) + '</div>'; });
-  }
-  function review() {
-    var tot = 0, html = '<div>الصف <b>' + esc(G) + '</b> — يوم <b>' + esc(DMY) + '</b><br><span class="mu">المستخدم: ' + esc(sget('hmMoeName') || '') + '</span></div>';
-    CLS.forEach(function (c) {
-      var n = (DATA.secs[c.sec] || []).length; tot += n;
-      html += '<div class="s"><b>' + esc(G) + ' / ' + ar(c.sec) + '</b> ' + (n ? '<span class="er">' + ar(n) + ' غائب يومًا كاملًا</span>' : '<span class="mu">لا غياب يوم كامل</span>') + '</div>';
-    });
-    var extra = Object.keys(DATA.secs).filter(function (k) { return !CLS.some(function (c) { return c.sec === k; }); });
-    if (extra.length) html += '<div class="er">شعب في بوابة المعلم غير موجودة في البوابة التعليمية: ' + extra.map(ar).join('، ') + '</div>';
-    html += '<label class="c"><input type="checkbox" id="hmAll"> حفظ الشعب التي ليس فيها غياب أيضًا (الجميع حاضر)</label>' +
-      '<button class="btn" id="hmGo"' + (tot ? '' : ' disabled') + '>إدخال الغياب وحفظه في البوابة التعليمية</button>' +
-      '<button class="btn g" id="hmRe">تحديث</button>';
+    var MG = minGrades(), avail = GRADES.filter(function (g) { return MG[g]; });
+    if (!avail.length) { bd.innerHTML = '<div class="er">لم تظهر قائمة الصفوف في الصفحة بعد. انتظر لحظة ثم اضغط «تحديث».</div><button class="btn g" id="hmRe">تحديث</button>'; $('hmRe').onclick = start; return; }
+    var today = toYmd($('txtDate').value) || new Date().toISOString().slice(0, 10);
+    var cur = curGrade(), mode = lget('hmMoeMode') || 'one';
+    var html = '<div class="mu">المستخدم: ' + esc(sget('hmMoeName') || '') + '</div>' +
+      '<div style="margin-top:8px"><b>الصفوف</b></div><div style="display:flex;flex-wrap:wrap;gap:4px 14px">' +
+      '<label class="c"><input type="checkbox" id="hmGAll"> جميع الصفوف</label>' +
+      avail.map(function (g) { return '<label class="c"><input type="checkbox" class="hmG" value="' + g + '"' + (g === cur ? ' checked' : '') + '> ' + g + '</label>'; }).join('') + '</div>' +
+      '<div style="margin-top:10px"><b>التاريخ</b></div><div style="display:flex;gap:14px">' +
+      '<label class="c"><input type="radio" name="hmM" value="one"' + (mode === 'one' ? ' checked' : '') + '> يوم محدد</label>' +
+      '<label class="c"><input type="radio" name="hmM" value="range"' + (mode === 'range' ? ' checked' : '') + '> فترة من - إلى</label></div>' +
+      '<div style="display:flex;gap:10px;align-items:center;margin-top:6px"><span id="hmFl">من</span><input type="date" id="hmFrom" value="' + today + '" max="' + today + '" style="flex:1;padding:6px;border:1px solid #bbb;border-radius:8px;font:inherit"></div>' +
+      '<div id="hmToRow" style="display:flex;gap:10px;align-items:center;margin-top:6px"><span>إلى</span><input type="date" id="hmTo" value="' + today + '" max="' + today + '" style="flex:1;padding:6px;border:1px solid #bbb;border-radius:8px;font:inherit"></div>' +
+      '<div class="mu" style="margin-top:4px">أقصى فترة ٣١ يومًا.</div>' +
+      '<button class="btn" id="hmShow">عرض الغياب</button>';
     bd.innerHTML = html;
-    $('hmAll').onchange = function () { $('hmGo').disabled = !tot && !this.checked; };
+    var gAll = $('hmGAll'), gs = bd.querySelectorAll('.hmG');
+    var syncAll = function () { gAll.checked = Array.prototype.every.call(gs, function (x) { return x.checked; }); };
+    gAll.onchange = function () { Array.prototype.forEach.call(gs, function (x) { x.checked = gAll.checked; }); };
+    Array.prototype.forEach.call(gs, function (x) { x.onchange = syncAll; }); syncAll();
+    var syncMode = function () { var m = bd.querySelector('input[name=hmM]:checked').value; $('hmToRow').style.display = m === 'range' ? 'flex' : 'none'; $('hmFl').textContent = m === 'range' ? 'من' : 'اليوم'; lset('hmMoeMode', m); };
+    Array.prototype.forEach.call(bd.querySelectorAll('input[name=hmM]'), function (x) { x.onchange = syncMode; }); syncMode();
+    $('hmShow').onclick = function () {
+      var grades = Array.prototype.filter.call(gs, function (x) { return x.checked; }).map(function (x) { return x.value; });
+      if (!grades.length) { alert('اختر صفًا واحدًا على الأقل.'); return; }
+      var m = bd.querySelector('input[name=hmM]:checked').value, f = $('hmFrom').value, t = m === 'range' ? $('hmTo').value : f;
+      if (!f || !t) { alert('حدد التاريخ.'); return; }
+      if (f > t) { var x = f; f = t; t = x; }
+      fetchData(grades, f, t, MG);
+    };
+  }
+  function fetchData(grades, f, t, MG) {
+    bd.innerHTML = '<div>جارٍ إحضار الغياب من بوابة المعلم…</div>';
+    api('moeAbsencesRange', [sget('hmMoeTok'), f, t, grades]).then(function (r) { DATA = r; review(grades, MG); })
+      .catch(function (e) {
+        if (/انتهت الجلسة|سجّل الدخول/.test(e.message)) { sset('hmMoeTok', null); loginView(e.message); return; }
+        bd.innerHTML = '<div class="er">' + esc(e.message) + '</div><button class="btn g" id="hmRe">رجوع</button>'; $('hmRe').onclick = start;
+      });
+  }
+  function review(grades, MG) {
+    ITEMS = [];
+    var days = Object.keys(DATA.days).sort(), html = '<div>الفترة: <b>' + arDate(DATA.from) + '</b>' + (DATA.to !== DATA.from ? ' إلى <b>' + arDate(DATA.to) + '</b>' : '') + ' — ' + grades.join('، ') + '</div>';
+    var tot = 0;
+    days.forEach(function (d) {
+      var dd = DATA.days[d], rows = '';
+      GRADES.forEach(function (g) {
+        if (!dd[g] || !MG[g]) return;
+        var secs = Object.keys(dd[g]).sort(function (a, b) { return a - b; });
+        secs.forEach(function (sec) {
+          var names = dd[g][sec]; tot += names.length;
+          ITEMS.push({ ymd: d, dmy: toDmy(d), grade: g, gradeVal: MG[g].value, gradeTxt: MG[g].text, sec: sec, names: names });
+        });
+        rows += '<div>' + g + ': ' + secs.map(function (s) { return ar(s) + ' (' + ar(dd[g][s].length) + ')'; }).join('، ') + '</div>';
+      });
+      if (rows) html += '<div class="s"><b>' + dayName(d) + ' ' + arDate(d) + '</b>' + rows + '</div>';
+    });
+    if (!ITEMS.length) html += '<div class="s mu">لا يوجد غياب يوم كامل مرصود في بوابة المعلم لهذا الاختيار.</div>';
+    else html += '<div class="mu">بين القوسين عدد الغائبين في الشعبة. المجموع: ' + ar(tot) + ' غياب في ' + ar(ITEMS.length) + ' كشف.' + (ITEMS.length > 15 ? ' قد يستغرق الإدخال نحو ' + ar(Math.ceil(ITEMS.length * 25 / 60)) + ' دقيقة.' : '') + '</div>';
+    html += '<button class="btn" id="hmGo"' + (ITEMS.length ? '' : ' disabled') + '>إدخال الغياب وحفظه في البوابة التعليمية</button><button class="btn g" id="hmRe">رجوع</button>';
+    bd.innerHTML = html;
     $('hmRe').onclick = start;
-    $('hmGo').onclick = function () { run($('hmAll').checked); };
+    $('hmGo').onclick = function () { run(); };
   }
   /* ---------- التنفيذ: الصفحة الحقيقية داخل إطار مخفي، تمامًا كما يضغط المستخدم ---------- */
   var IFR = null;
@@ -189,15 +236,15 @@
     if (!b) throw new Error('لم يُعثر على زر ' + (id === 'btnSaveSheet' ? '«حفظ»' : '«عرض»') + ' في الصفحة.');
     b.click();
   }
-  function run(saveEmpty) {
+  function run() {
     busy = true;
-    var list = CLS.filter(function (c) { return saveEmpty || (DATA.secs[c.sec] || []).length; });
+    var list = ITEMS.slice();
     bd.innerHTML = '<div id="hmProg">جارٍ الإدخال… لا تغلق الصفحة ولا تنتقل منها.</div><div id="hmLog"></div>';
     var logEl = $('hmLog'), report = [], doc = null;
-    var gSel = $('SchoolFilterCtrl1_ddlGrades'), gradeVal = selVal(document, 'SchoolFilterCtrl1_ddlGrades'), gradeTxt = selText(gSel);
     var i = 0;
     var first = step(function (f) { f.src = location.href.split('#')[0]; });
     function openClass(d, c) {
+      var gradeVal = c.gradeVal, gradeTxt = c.gradeTxt, DMY = c.dmy, gate = false;
       return Promise.resolve(d).then(function (d) {
         var gEl = function () { return d.getElementById('SchoolFilterCtrl1_ddlGrades'); };
         var cEl = function () { return d.getElementById('SchoolFilterCtrl1_ddlClasses'); };
@@ -209,8 +256,7 @@
         // الشعبة في صفحة الإطار: بالقيمة نفسها، أو برقمها إذا كانت قائمة الشعب قد أُعيد تحميلها للصف المطلوب
         var pick = function () {
           var s = cEl(); if (!s || gEl().value !== gradeVal) return null;
-          for (var k = 0; k < s.options.length; k++) if (s.options[k].value === c.value) return s.options[k].value;
-          if (!fired || snap() === before) return null;
+          if (fired ? snap() === before : !gate) return null;
           for (var k2 = 0; k2 < s.options.length; k2++) if (numTxt(s.options[k2]) === c.sec) return s.options[k2].value;
           return null;
         };
@@ -225,6 +271,7 @@
         };
         return waitFor(function () { return gEl() && gEl().options.length && cEl() && cEl().options.length; }, 15000)
           .then(function () { return sleep(1500); })
+          .then(function () { gate = gEl().value === gradeVal; })
           .then(function () { return attempt(1); })
           .then(function (cv) {
             if (!cv) throw new Error('تعذر اختيار ' + gradeTxt + ' / ' + c.sec + ' في صفحة الوزارة (الظاهر: ' + selText(gEl()) + ' / ' + (selText(cEl()) || '—') + '، عدد الشعب في القائمة: ' + cEl().options.length + ').');
@@ -249,9 +296,10 @@
     }
     function next() {
       if (i >= list.length) return finish();
-      var c = list[i++], names = DATA.secs[c.sec] || [];
-      var line = document.createElement('div'); line.className = 's'; line.innerHTML = '<b>' + esc(G) + ' / ' + ar(c.sec) + '</b> <span class="mu">جارٍ فتح الكشف…</span>';
-      logEl.appendChild(line);
+      var c = list[i++], names = c.names, LBL = '<b>' + esc(c.grade) + ' / ' + ar(c.sec) + '</b> <span class="mu">' + arDate(c.ymd) + '</span> ';
+      var line = document.createElement('div'); line.className = 's'; line.innerHTML = LBL + '<span class="mu st">جارٍ فتح الكشف…</span>';
+      $('hmProg').textContent = 'جارٍ الإدخال (' + ar(i) + ' من ' + ar(list.length) + ')… لا تغلق الصفحة ولا تنتقل منها.';
+      logEl.appendChild(line); line.scrollIntoView({ block: 'nearest' });
       var p = doc ? Promise.resolve(doc) : first;
       p.then(function (d) { return openClass(d, c); }).then(function (d) {
         var pg = d.getElementById('ctl02_ddlCurrentPage');
@@ -271,7 +319,7 @@
           done.push(nm);
         });
         if (names.length && !done.length && !already.length) throw new Error('لم يُطابَق أي اسم من الغائبين مع كشف الوزارة، فلم يُحفظ شيء (تأكد أن الكشف المفتوح للشعبة الصحيحة). الأسماء: ' + names.join('، '));
-        line.querySelector('.mu').textContent = 'جارٍ الحفظ…';
+        line.querySelector('.st').textContent = 'جارٍ الحفظ…';
         return step(function () { click(d, 'btnSaveSheet'); }).then(function (d2) {
           doc = d2;
           var found = function () {
@@ -282,7 +330,7 @@
           return waitFor(found, 6000).then(function (ok) {
             if (ok || !done.length) return ok ? 'msg' : 'none';
             // لم تظهر الرسالة: يُعاد فتح الكشف للتأكد من أن الغائبين محفوظون فعلًا في نظام الوزارة
-            line.querySelector('.mu') && (line.querySelector('.mu').textContent = 'جارٍ التحقق من الحفظ…');
+            line.querySelector('.st') && (line.querySelector('.st').textContent = 'جارٍ التحقق من الحفظ…');
             return openClass(d2, c).then(function (d3) {
               var rows3 = gridRows(d3), bad = [];
               done.forEach(function (nm) {
@@ -296,7 +344,7 @@
               return 'verified';
             });
           }).then(function (how) {
-          var h = '<b>' + esc(G) + ' / ' + ar(c.sec) + '</b> <span class="ok">✔ حُفظ</span> — ' + ar(done.length) + ' غائب';
+          var h = LBL + '<span class="ok">✔ حُفظ</span> — ' + ar(done.length) + ' غائب';
           if (already.length) h += '<div class="mu">مسجّلون غائبين مسبقًا: ' + already.map(esc).join('، ') + '</div>';
           if (miss.length) h += '<div class="er">لم يُعثر عليهم في كشف الوزارة (أدخلهم يدويًا):<ul><li>' + miss.map(esc).join('</li><li>') + '</li></ul></div>';
           if (how === 'verified') h += '<div class="mu">تأكدنا بإعادة فتح الكشف أن الغياب محفوظ.</div>';
@@ -304,7 +352,7 @@
           });
         });
       }).catch(function (e) {
-        line.innerHTML = '<b>' + esc(G) + ' / ' + ar(c.sec) + '</b> <span class="er">✖ ' + esc(e.message) + '</span>';
+        line.innerHTML = LBL + '<span class="er">✖ ' + esc(e.message) + '</span>';
         report.push({ sec: c.sec, ok: false });
         if (/جلسة|مهلة/.test(e.message)) { doc = null; first = step(function (f) { f.src = location.href.split('#')[0]; }); }
       }).then(next);
@@ -312,7 +360,7 @@
     function finish() {
       busy = false;
       var ok = report.filter(function (r) { return r.ok; }).length, bad = report.length - ok, miss = report.reduce(function (a, r) { return a + (r.miss || 0); }, 0);
-      $('hmProg').innerHTML = '<b>' + (bad ? '<span class="er">انتهى مع ملاحظات</span>' : '<span class="ok">تم الانتهاء</span>') + '</b>: حُفظت ' + ar(ok) + ' من ' + ar(report.length) + ' شعب' +
+      $('hmProg').innerHTML = '<b>' + (bad ? '<span class="er">انتهى مع ملاحظات</span>' : '<span class="ok">تم الانتهاء</span>') + '</b>: حُفظ ' + ar(ok) + ' من ' + ar(report.length) + ' كشف' +
         (miss ? '، و' + ar(miss) + ' طالب يحتاج إدخالًا يدويًا' : '') + '.';
       var b = document.createElement('button'); b.className = 'btn g'; b.textContent = 'إعادة تحميل الصفحة لمراجعة الكشوف';
       b.onclick = function () { location.reload(); }; bd.appendChild(b);
