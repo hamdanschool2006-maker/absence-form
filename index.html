@@ -559,7 +559,7 @@ function setSession(r){
   if(r.sys){ SYS=r.sys; S.job=r.sys.job||''; S.fileNo=r.sys.fileNo||''; }
   S.admin=r.admin===true; S.viewAs=r.viewAs?r.name:''; store('absAdmin',S.admin?'1':null); store('absViewAs',S.viewAs||null);
   if(!S.viewAs) lset('absProfile',JSON.stringify({name:r.name,civil:r.civil||'',canLog:r.canLog!==false,canStats:r.canStats===true,
-    classes:r.classes||[],job:S.job||'',fileNo:S.fileNo||''}));
+    classes:r.classes||[],job:S.job||'',fileNo:S.fileNo||'',admin:S.admin}));
   S.token=r.token; S.name=r.name; S.civil=r.civil||''; store('absCivil',S.civil); S.classes=r.classes; S.today=r.today; S.canLog=r.canLog!==false; S.canStats=r.canStats===true;
   store('absToken',r.token); store('absName',r.name); store('absLog',S.canLog?'1':'0'); store('absStats',S.canStats?'1':'0');
   // إحصائية الدخول تُرسل في الخلفية بعد ظهور الصفحة، فلا ينتظرها المعلم
@@ -1874,12 +1874,13 @@ document.addEventListener('visibilitychange',()=>{
   const instant=()=>{
     if(!prof) return false;
     S.name=S.name||prof.name; S.civil=S.civil||prof.civil; S.job=prof.job; S.fileNo=prof.fileNo;
-    if(!t){ S.canLog=prof.canLog; S.canStats=prof.canStats; }
+    if(!t){ S.canLog=prof.canLog; S.canStats=prof.canStats; S.admin=prof.admin===true; }
     S.classes=prof.classes||[]; S.today=muscatToday();
     startApp(); return true;
   };
   const afterRestore=()=>{ S.restoring=false; fillGrades(); fillLogGrades(); renderMe(); if(!SYS) loadMe();
-    $('goLog').classList.toggle('hidden',!S.canLog); $('goMoe').classList.toggle('hidden',!S.canLog); $('goStats').classList.toggle('hidden',!S.canStats); };
+    $('goLog').classList.toggle('hidden',!S.canLog); $('goMoe').classList.toggle('hidden',!S.canLog); $('goStats').classList.toggle('hidden',!S.canStats);
+    vaSync(); };   // خانة «عرض صفحة معلم» تظهر بعد التحقق من الصلاحية من الخادم
   const backToLogin=(m)=>{ S.restoring=false; READY=null; logoutLocal(); if(m) $('loginErr').textContent=m; };
 
   // بعد انتهاء الاستعادة بأي نتيجة (نجاح أو انقطاع): تُستكمل بيانات المعلم إن لم تصل
